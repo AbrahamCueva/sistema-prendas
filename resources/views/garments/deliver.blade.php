@@ -2,7 +2,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Confirmar Entrega y Devolución de Prenda') }}
+            {{ __('Confirmar Entrega y Devolución de Lote') }}
         </h2>
     </x-slot>
 
@@ -14,13 +14,15 @@
 
                     {{-- TÍTULO --}}
                     <h3 class="text-2xl font-bold mb-3 text-green-600 dark:text-green-400">
-                        Prenda PV: {{ $garment->pv }}
+                        Lote PV: {{ $garment->pv }}
                     </h3>
 
                     {{-- INFO --}}
                     <p class="text-gray-600 dark:text-gray-300 mb-6">
                         Marca: <span class="font-semibold">{{ $garment->client->name }}</span> |
-                        Color: <span class="font-semibold">{{ $garment->color }}</span>
+                        Color: <span class="font-semibold">{{ $garment->color }}</span> |
+                        Talla: <span class="font-semibold">{{ $garment->size }}</span> |
+                        Cantidad: <span class="font-semibold">x{{ $garment->quantity }}</span>
                     </p>
 
                     {{-- MOTIVO --}}
@@ -41,7 +43,7 @@
                         {{-- PERSONA QUE RECIBE --}}
                         <div class="mb-6">
                             <label for="received_by" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Nombre de la Persona que Recibe
+                                Nombre de la Persona que Recibe el Lote (Destino Final)
                             </label>
 
                             <input id="received_by" type="text" name="received_by"
@@ -77,7 +79,7 @@
 
                             <button type="submit"
                                 class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition shadow-lg">
-                                Confirmar ENTREGA y Cerrar Caso
+                                Confirmar ENTREGA y Cerrar Lote
                             </button>
 
                         </div>

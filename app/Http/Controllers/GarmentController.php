@@ -18,7 +18,7 @@ class GarmentController extends Controller
     public function index()
     {
         $garments = Garment::with(['client', 'stitchingLine', 'motive', 'registeredByUser', 'deliveredByUser'])
-            ->orderByRaw("FIELD(status, 'pendiente', 'entregado')") // Pendiente primero
+            ->orderByRaw("FIELD(status, 'pendiente', 'entregado')")
             ->orderBy('delivery_in_date', 'desc')
             ->paginate(15);
 
@@ -30,7 +30,6 @@ class GarmentController extends Controller
      */
     public function create()
     {
-        // Se necesitan los datos de las tablas maestras
         $clients = Client::orderBy('name')->get();
         $lines = StitchingLine::orderBy('name')->get();
         $motives = Motive::orderBy('name')->get();
@@ -50,10 +49,12 @@ class GarmentController extends Controller
             'client_id' => 'required|exists:clients,id',
             'stitching_line_id' => 'required|exists:stitching_lines,id',
             'motive_id' => 'required|exists:motives,id',
-            'pv' => 'required|string|size:5|unique:garments,pv',
+            'pv' => 'required|string|size:5', // PV ya no es unique
             'color' => 'required|string|max:100',
+            'size' => 'required|string|max:10', // NUEVO: Talla
+            'quantity' => 'required|integer|min:1', // NUEVO: Cantidad
             'delivered_by' => 'required|string|max:255',
-            'is_audit' => 'nullable|boolean',
+            'audit_level' => 'required|in:normal,urgente', // MODIFICADO: Nivel de auditoría
         ]);
 
         Garment::create([
@@ -62,15 +63,17 @@ class GarmentController extends Controller
             'motive_id' => $request->motive_id,
             'pv' => $request->pv,
             'color' => $request->color,
+            'size' => $request->size, // Nuevo campo
+            'quantity' => $request->quantity, // Nuevo campo
             'delivered_by' => $request->delivered_by,
-            'is_audit' => $request->has('is_audit'),
-            'delivery_in_date' => Carbon::now(), // Fecha y hora de registro de entrada
-            'registered_by_user_id' => Auth::id(), // ID del usuario autenticado que registra
+            'audit_level' => $request->audit_level, // Nuevo campo
+            'delivery_in_date' => Carbon::now(),
+            'registered_by_user_id' => Auth::id(),
             'status' => 'pendiente',
         ]);
 
         return redirect()->route('garments.index')
-            ->with('success', 'Prenda registrada con éxito. ¡Pendiente de entrega!');
+            ->with('success', 'Lote de prendas PV ' . $request->pv . ' registrado con éxito. ¡Pendiente de entrega!');
     }
 
     /**
@@ -134,6 +137,21 @@ class GarmentController extends Controller
      */
     public function destroy(Garment $garment)
     {
-        //
+        // Validación de Regla de Negocio:
+        // Solo se puede eliminar si ya ha sido entregada.
+        if ($garment->status !== 'entregado') {
+            return redirect()->route('garments.index')->with(
+                'error',
+                "No se puede eliminar la prenda **PV {$garment->pv}** porque su estado es 'pendiente'. Solo se permiten eliminar lotes ya entregados."
+            );
+        }
+
+        // Si la validación pasa, procede a eliminar
+        $garment->delete();
+
+        return redirect()->route('garments.index')->with(
+            'success',
+            "El lote **PV {$garment->pv}** ha sido eliminado permanentemente."
+        );
     }
 }

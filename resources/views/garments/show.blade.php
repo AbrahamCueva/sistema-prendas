@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-bold text-2xl text-gray-800 dark:text-gray-200 leading-tight">
-            Detalle de Prenda PV:
+            Detalle de Lote PV:
             <span class="text-indigo-600 dark:text-indigo-400">{{ $garment->pv }}</span>
         </h2>
     </x-slot>
@@ -48,37 +48,53 @@
                 {{-- DATOS GENERALES --}}
                 <div class="p-6 space-y-6">
                     <h4 class="text-lg font-bold border-b dark:border-gray-700 pb-2 text-gray-700 dark:text-gray-300">
-                        Información General
+                        Información General del Lote
                     </h4>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
 
+                        {{-- Talla --}}
                         <div>
-                            <p class="text-sm text-gray-500">Cliente (Marca)</p>
-                            <p class="font-bold text-lg">{{ $garment->client->name }}</p>
+                            <p class="text-sm text-gray-500">Talla</p>
+                            <p class="font-bold text-lg">{{ $garment->size }}</p>
                         </div>
 
+                        {{-- Cantidad --}}
+                        <div>
+                            <p class="text-sm text-gray-500">Cantidad de Prendas</p>
+                            <p class="font-bold text-lg">{{ $garment->quantity }}</p>
+                        </div>
+
+                        {{-- Color --}}
                         <div>
                             <p class="text-sm text-gray-500">Color</p>
                             <p class="text-base">{{ $garment->color }}</p>
                         </div>
 
-                        <div>
-                            <p class="text-sm text-gray-500">Línea Responsable</p>
-                            <p class="text-base">{{ $garment->stitchingLine->name }}</p>
-                        </div>
-
+                        {{-- Prioridad --}}
                         <div>
                             <p class="text-sm text-gray-500">Prioridad</p>
-                            @if($garment->is_audit)
+                            @if($garment->audit_level === 'urgente')
                                 <span class="px-3 py-1 text-sm rounded-full bg-red-600 text-white font-semibold">
-                                    AUDITORÍA (URGENTE)
+                                    URGENTE
                                 </span>
                             @else
                                 <span class="px-3 py-1 text-sm rounded-full bg-gray-200 dark:bg-gray-700">
                                     Normal
                                 </span>
                             @endif
+                        </div>
+
+                        {{-- Cliente --}}
+                        <div class="md:col-span-2">
+                            <p class="text-sm text-gray-500">Cliente (Marca)</p>
+                            <p class="font-medium text-base">{{ $garment->client->name }}</p>
+                        </div>
+
+                        {{-- Línea --}}
+                        <div class="md:col-span-2">
+                            <p class="text-sm text-gray-500">Línea Responsable</p>
+                            <p class="text-base">{{ $garment->stitchingLine->name }}</p>
                         </div>
 
                     </div>
@@ -167,7 +183,7 @@
                     </div>
                 @else
                     <div class="p-6 border-t dark:border-gray-800 bg-yellow-50 dark:bg-yellow-900 text-center italic text-gray-700 dark:text-gray-300">
-                        Aún no hay registro de devolución para esta prenda.
+                        Aún no hay registro de devolución para este lote.
                     </div>
                 @endif
 

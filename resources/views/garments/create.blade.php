@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-bold text-2xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Registro de Entrada de Prenda') }}
+            {{ __('Registro de Entrada de Lote de Prendas') }}
         </h2>
     </x-slot>
 
@@ -14,21 +14,38 @@
                         @csrf
 
                         <h3 class="text-xl font-semibold mb-6 text-indigo-600 dark:text-indigo-400 border-b dark:border-gray-700 pb-2">
-                            Datos de la Prenda
+                            Datos del Lote de Prendas
                         </h3>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
 
                             {{-- PV --}}
-                            <div>
-                                <label class="block text-sm font-semibold mb-1">PV (Código Único)</label>
+                            <div class="md:col-span-1">
+                                <label class="block text-sm font-semibold mb-1">PV (Código)</label>
                                 <input id="pv" type="text" name="pv" value="{{ old('pv', $randomPV) }}" required maxlength="5"
                                     class="w-full rounded-lg bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-indigo-500 focus:border-indigo-500">
                                 @error('pv') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
                             </div>
 
+                            {{-- Talla --}}
+                            <div class="md:col-span-1">
+                                <label class="block text-sm font-semibold mb-1">Talla</label>
+                                <input id="size" type="text" name="size" value="{{ old('size') }}" required
+                                    placeholder="Ej: S, M, L, 32"
+                                    class="w-full rounded-lg bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-indigo-500 focus:border-indigo-500">
+                                @error('size') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
+                            </div>
+
+                            {{-- Cantidad --}}
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-semibold mb-1">Cantidad de Prendas</label>
+                                <input id="quantity" type="number" name="quantity" value="{{ old('quantity', 1) }}" required min="1"
+                                    class="w-full rounded-lg bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-indigo-500 focus:border-indigo-500">
+                                @error('quantity') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
+                            </div>
+
                             {{-- Color --}}
-                            <div>
+                            <div class="md:col-span-2">
                                 <label class="block text-sm font-semibold mb-1">Color de la Prenda</label>
                                 <input id="color" type="text" name="color" value="{{ old('color') }}" required
                                     class="w-full rounded-lg bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-indigo-500 focus:border-indigo-500">
@@ -36,7 +53,7 @@
                             </div>
 
                             {{-- Cliente --}}
-                            <div>
+                            <div class="md:col-span-2">
                                 <label class="block text-sm font-semibold mb-1">Cliente (Marca)</label>
                                 <select name="client_id" required
                                     class="w-full rounded-lg bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600">
@@ -51,7 +68,7 @@
                             </div>
 
                             {{-- Línea --}}
-                            <div>
+                            <div class="md:col-span-2">
                                 <label class="block text-sm font-semibold mb-1">Línea que la Hizo</label>
                                 <select name="stitching_line_id" required
                                     class="w-full rounded-lg bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600">
@@ -82,23 +99,22 @@
 
                             {{-- Persona --}}
                             <div class="md:col-span-2">
-                                <label class="block text-sm font-semibold mb-1">Persona que Entrega</label>
+                                <label class="block text-sm font-semibold mb-1">Persona que Entrega el Lote</label>
                                 <input type="text" name="delivered_by" value="{{ old('delivered_by') }}" required
                                     class="w-full rounded-lg bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600">
                                 @error('delivered_by') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
                             </div>
 
-                            {{-- Auditoría --}}
-                            <div class="md:col-span-2 flex items-start mt-3">
-                                <input id="is_audit" name="is_audit" type="checkbox" value="1"
-                                    class="h-5 w-5 text-red-600 rounded bg-gray-100 dark:bg-gray-800 border-gray-400"
-                                    {{ old('is_audit') ? 'checked' : '' }}>
-                                <div class="ml-3">
-                                    <label class="font-semibold">¿Es de Auditoría (Urgente)?</label>
-                                    <p class="text-sm text-red-500">Marcar si la prenda requiere atención inmediata</p>
-                                </div>
+                            {{-- Auditoría/Prioridad --}}
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-semibold mb-1">Nivel de Auditoría/Urgencia</label>
+                                <select name="audit_level" required
+                                    class="w-full rounded-lg bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="normal" {{ old('audit_level') == 'normal' ? 'selected' : '' }}>Normal (Atención Estándar)</option>
+                                    <option value="urgente" {{ old('audit_level') == 'urgente' ? 'selected' : '' }}>Urgente (Requiere Auditoría Rápida)</option>
+                                </select>
+                                @error('audit_level') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
                             </div>
-
                         </div>
 
                         {{-- BOTONES --}}
@@ -110,7 +126,7 @@
 
                             <button type="submit"
                                 class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow transition">
-                                Registrar ENTRADA
+                                Registrar ENTRADA de Lote
                             </button>
                         </div>
 

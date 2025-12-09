@@ -13,6 +13,7 @@ class Garment extends Model
         'delivery_in_date' => 'datetime',
         'delivery_out_date' => 'datetime',
         'is_audit' => 'boolean',
+        'quantity' => 'integer',
     ];
 
     public function client(): BelongsTo
