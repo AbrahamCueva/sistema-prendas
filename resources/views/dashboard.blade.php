@@ -1,5 +1,10 @@
-{{-- resources/views/dashboard.blade.php --}}
 <x-app-layout>
+
+    {{-- 1. MODIFICADO: Añadido el slot 'title' para el título de la pestaña --}}
+    <x-slot name="title">
+        {{ __('Panel de Control') }}
+    </x-slot>
+
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
             {{ __('Panel de Control') }}
@@ -12,25 +17,28 @@
             {{-- CUADRÍCULA 1: Tarjetas de Conteo (4 columnas) --}}
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
-                {{-- Tarjeta 1: Total de Prendas Registradas --}}
+                {{-- Tarjeta 1: Total de Lotes Registrados --}}
                 <div
                     class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-6 border-b-4 border-indigo-500 transition duration-300 hover:shadow-2xl">
                     <div class="flex items-center">
                         <i class="fas fa-tshirt text-3xl text-indigo-500 mr-4"></i>
                         <div>
-                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Registrado</p>
+                            {{-- 2. MODIFICADO: Cambiado a "Total Lotes Registrados" --}}
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Lotes Registrados</p>
                             <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ $totalGarments }}</h3>
                         </div>
                     </div>
                 </div>
 
-                {{-- Tarjeta 2: Pendientes de Entrega --}}
+                {{-- Tarjeta 2: Lotes Pendientes de Entrega --}}
                 <div
                     class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-6 border-b-4 border-yellow-500 transition duration-300 hover:shadow-2xl">
                     <div class="flex items-center">
                         <i class="fas fa-clock text-3xl text-yellow-500 mr-4"></i>
                         <div>
-                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Pendientes de Entrega</p>
+                            {{-- 2. MODIFICADO: Cambiado a "Lotes Pendientes de Entrega" --}}
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Lotes Pendientes de Entrega
+                            </p>
                             <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ $pendingGarments }}</h3>
                         </div>
                     </div>
@@ -39,13 +47,14 @@
                         Pendientes &rarr;</a>
                 </div>
 
-                {{-- Tarjeta 3: Entregadas (Historial) --}}
+                {{-- Tarjeta 3: Lotes Entregados --}}
                 <div
                     class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-6 border-b-4 border-green-500 transition duration-300 hover:shadow-2xl">
                     <div class="flex items-center">
                         <i class="fas fa-handshake text-3xl text-green-500 mr-4"></i>
                         <div>
-                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Prendas Entregadas</p>
+                            {{-- 2. MODIFICADO: Cambiado a "Lotes Entregados" --}}
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Lotes Entregados</p>
                             <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ $deliveredGarments }}</h3>
                         </div>
                     </div>
@@ -128,7 +137,7 @@
                         data: {
                             labels: lineLabels,
                             datasets: [{
-                                label: '# de Prendas Ingresadas',
+                                label: '# de Lotes Ingresados',
                                 data: lineCounts,
                                 backgroundColor: [
                                     '#4f46e5', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6',
@@ -171,7 +180,7 @@
                 } else if (ctx) {
                     // Muestra un mensaje si no hay datos para dibujar
                     ctx.parentElement.innerHTML =
-                        '<p class="text-center py-4 text-sm text-gray-500 dark:text-gray-400">No hay datos de prendas registrados aún para mostrar la distribución.</p>';
+                        '<p class="text-center py-4 text-sm text-gray-500 dark:text-gray-400">No hay datos de lotes registrados aún para mostrar la distribución.</p>';
                 }
 
                 const motiveLabels = @json($motiveLabels);

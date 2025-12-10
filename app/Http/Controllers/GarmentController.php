@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\GarmentsExport;
 use App\Models\Client;
 use App\Models\Garment;
 use App\Models\Motive;
@@ -9,20 +10,90 @@ use App\Models\StitchingLine;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Facades\Excel;
 
 class GarmentController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $garments = Garment::with(['client', 'stitchingLine', 'motive', 'registeredByUser', 'deliveredByUser'])
-            ->orderByRaw("FIELD(status, 'pendiente', 'entregado')")
-            ->orderBy('delivery_in_date', 'desc')
-            ->paginate(15);
+        // 1. Obtener todos los clientes para el selector de filtro
+        $clients = Client::orderBy('name')->get();
 
-        return view('garments.index', compact('garments'));
+        // 2. Iniciar la consulta base
+        $query = Garment::with(['client', 'stitchingLine', 'motive', 'registeredByUser', 'deliveredByUser']);
+
+        // 3. Aplicar Filtros
+        if ($request->filled('search_pv')) {
+            $query->where('pv', 'like', '%'.$request->search_pv.'%');
+        }
+
+        if ($request->filled('client_id')) {
+            $query->where('client_id', $request->client_id);
+        }
+
+        if ($request->filled('status') && $request->status !== 'todos') {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('date_from')) {
+            // Se asume que 'date_from' es el inicio del día
+            $query->whereDate('delivery_in_date', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            // Se asume que 'date_to' es el final del día
+            $query->whereDate('delivery_in_date', '<=', $request->date_to);
+        }
+
+        // 4. Ordenación (Pendientes primero, luego Entregados, por fecha descendente)
+        $query->orderByRaw("FIELD(status, 'pendiente', 'entregado')")
+            ->orderBy('delivery_in_date', 'desc');
+
+        // 5. Paginación
+        $garments = $query->paginate(15);
+        $garments->appends($request->query()); // Mantiene los filtros al paginar
+
+        return view('garments.index', compact('garments', 'clients'));
+    }
+
+    public function export(Request $request)
+    {
+        // 1. Iniciar la consulta base
+        $query = Garment::query();
+
+        // 2. Aplicar Filtros (la misma lógica que en el método index)
+        if ($request->filled('search_pv')) {
+            $query->where('pv', 'like', '%'.$request->search_pv.'%');
+        }
+
+        if ($request->filled('client_id')) {
+            $query->where('client_id', $request->client_id);
+        }
+
+        if ($request->filled('status') && $request->status !== 'todos') {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('delivery_in_date', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('delivery_in_date', '<=', $request->date_to);
+        }
+
+        // 3. Ordenación (Opcional, pero recomendado para mantener la coherencia)
+        $query->orderByRaw("FIELD(status, 'pendiente', 'entregado')")
+            ->orderBy('delivery_in_date', 'desc');
+
+        // 4. Descargar el archivo
+        $filename = 'lotes_prendas_'.Carbon::now()->format('Ymd_His').'.xlsx';
+
+        // Se pasa la consulta filtrada a la clase exportadora
+        return Excel::download(new GarmentsExport($query), $filename);
     }
 
     /**
@@ -73,7 +144,7 @@ class GarmentController extends Controller
         ]);
 
         return redirect()->route('garments.index')
-            ->with('success', 'Lote de prendas PV ' . $request->pv . ' registrado con éxito. ¡Pendiente de entrega!');
+            ->with('success', 'Lote de prendas PV '.$request->pv.' registrado con éxito. ¡Pendiente de entrega!');
     }
 
     /**

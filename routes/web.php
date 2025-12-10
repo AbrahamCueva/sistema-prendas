@@ -32,6 +32,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('motives', MotiveController::class);
 
     // ... Las rutas del CRUD principal (Garments) se agregarán más adelante
+    Route::get('garments/export', [GarmentController::class, 'export'])->name('garments.export');
     Route::resource('garments', GarmentController::class);
 
     // Ruta específica para la entrega
