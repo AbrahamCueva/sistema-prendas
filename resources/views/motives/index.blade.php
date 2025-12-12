@@ -1,5 +1,8 @@
 {{-- resources/views/motives/index.blade.php --}}
 <x-app-layout>
+    <x-slot name="title">
+        {{ __('Gestión de Motivos de Arreglo') }}
+    </x-slot>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
             {{ __('Gestión de Motivos de Arreglo') }}

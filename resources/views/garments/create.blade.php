@@ -1,4 +1,7 @@
 <x-app-layout>
+    <x-slot name="title">
+        {{ __('Registro de Entrada de Lote de Prendas') }}
+    </x-slot>
     <x-slot name="header">
         <h2 class="font-bold text-2xl text-gray-800 dark:text-gray-200 leading-tight">
             {{ __('Registro de Entrada de Lote de Prendas') }}
@@ -10,7 +13,8 @@
             <div class="bg-white dark:bg-gray-900 overflow-hidden shadow-xl sm:rounded-2xl border dark:border-gray-700">
                 <div class="p-6 text-gray-900 dark:text-gray-200">
 
-                    <form method="POST" action="{{ route('garments.store') }}">
+                    {{-- CAMBIO CLAVE: Se añade enctype para la subida de archivos --}}
+                    <form method="POST" action="{{ route('garments.store') }}" enctype="multipart/form-data">
                         @csrf
 
                         <h3 class="text-xl font-semibold mb-6 text-indigo-600 dark:text-indigo-400 border-b dark:border-gray-700 pb-2">
@@ -18,6 +22,7 @@
                         </h3>
 
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            {{-- ... (PV y Talla, sin cambios) ... --}}
 
                             {{-- PV --}}
                             <div class="md:col-span-1">
@@ -36,13 +41,15 @@
                                 @error('size') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
                             </div>
 
-                            {{-- Cantidad --}}
+                            {{-- Cantidad (Cambio de 'quantity' a 'quantity_in') --}}
                             <div class="md:col-span-2">
-                                <label class="block text-sm font-semibold mb-1">Cantidad de Prendas</label>
-                                <input id="quantity" type="number" name="quantity" value="{{ old('quantity', 1) }}" required min="1"
+                                <label class="block text-sm font-semibold mb-1">Cantidad de Prendas (Lote Completo)</label>
+                                <input id="quantity_in" type="number" name="quantity_in" value="{{ old('quantity_in', 1) }}" required min="1"
                                     class="w-full rounded-lg bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-indigo-500 focus:border-indigo-500">
-                                @error('quantity') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
+                                @error('quantity_in') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
                             </div>
+
+                            {{-- ... (El resto del formulario, sin cambios) ... --}}
 
                             {{-- Color --}}
                             <div class="md:col-span-2">
@@ -95,6 +102,17 @@
                                     @endforeach
                                 </select>
                                 @error('motive_id') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
+                            </div>
+
+                            {{-- FOTO DEL DEFECTO --}}
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-semibold mb-1 text-gray-700 dark:text-gray-300">
+                                    Foto del Defecto (Opcional)
+                                </label>
+                                <input id="defect_photo" type="file" name="defect_photo" accept="image/*"
+                                    class="w-full rounded-lg bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-indigo-500 focus:border-indigo-500 p-2">
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Sube una imagen (JPG, PNG) para documentar el problema.</p>
+                                @error('defect_photo') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
                             </div>
 
                             {{-- Persona --}}

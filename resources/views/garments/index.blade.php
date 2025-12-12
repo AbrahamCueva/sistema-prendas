@@ -1,4 +1,7 @@
 <x-app-layout>
+    <x-slot name="title">
+        {{ __('Regristro y Seguimiento de Prendas') }}
+    </x-slot>
     <x-slot name="header">
         <h2 class="font-bold text-2xl text-gray-800 dark:text-gray-200 leading-tight">
             {{ __('Registro y Seguimiento de Prendas') }}
@@ -50,15 +53,16 @@
 
                             {{-- Filtro PV --}}
                             <div>
-                                <label for="search_pv" class="block text-sm font-medium text-gray-700 dark:text-gray-300">PV</label>
-                                <input type="text" name="search_pv" id="search_pv"
-                                    value="{{ request('search_pv') }}"
+                                <label for="search_pv"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">PV</label>
+                                <input type="text" name="search_pv" id="search_pv" value="{{ request('search_pv') }}"
                                     class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                             </div>
 
                             {{-- Filtro Cliente --}}
                             <div>
-                                <label for="client_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Cliente</label>
+                                <label for="client_id"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Cliente</label>
                                 <select name="client_id" id="client_id"
                                     class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                                     <option value="">Todos los Clientes</option>
@@ -73,7 +77,8 @@
 
                             {{-- Filtro Estado --}}
                             <div>
-                                <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Estado</label>
+                                <label for="status"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Estado</label>
                                 <select name="status" id="status"
                                     class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                                     <option value="todos" {{ request('status') == 'todos' ? 'selected' : '' }}>Todos
@@ -87,7 +92,9 @@
 
                             {{-- Filtro Fecha Desde --}}
                             <div>
-                                <label for="date_from" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha Desde</label>
+                                <label for="date_from"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha
+                                    Desde</label>
                                 <input type="date" name="date_from" id="date_from"
                                     value="{{ request('date_from') }}"
                                     class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
@@ -95,9 +102,10 @@
 
                             {{-- Filtro Fecha Hasta --}}
                             <div>
-                                <label for="date_to" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha Hasta</label>
-                                <input type="date" name="date_to" id="date_to"
-                                    value="{{ request('date_to') }}"
+                                <label for="date_to"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha
+                                    Hasta</label>
+                                <input type="date" name="date_to" id="date_to" value="{{ request('date_to') }}"
                                     class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                             </div>
 
@@ -154,8 +162,28 @@
                                             <td class="px-4 py-3 font-bold">
                                                 <span
                                                     class="text-indigo-600 dark:text-indigo-400 text-lg">{{ $garment->pv }}</span>
+
+                                                {{-- Muestra la Cantidad de Entrada --}}
                                                 <span class="text-gray-500 dark:text-gray-400"> ({{ $garment->size }} /
-                                                    x{{ $garment->quantity }})</span>
+                                                    x{{ $garment->quantity_in }}
+
+                                                    {{-- Muestra la cantidad de salida si existe y es diferente --}}
+                                                    @if ($garment->quantity_out > 0 && $garment->quantity_out != $garment->quantity_in)
+                                                        <span class="text-green-600 dark:text-green-400"> | Entregado:
+                                                            {{ $garment->quantity_out }}</span>
+                                                    @endif
+
+                                                    {{-- Muestra la cantidad restante si no está completamente entregado --}}
+                                                    @php
+                                                        $remaining = $garment->quantity_in - $garment->quantity_out;
+                                                    @endphp
+                                                    @if ($garment->status === 'pendiente' && $remaining > 0)
+                                                        <span class="text-orange-600 dark:text-orange-400"> | Pendiente:
+                                                            {{ $remaining }}</span>
+                                                    @endif
+                                                    )
+                                                </span>
+
                                                 @if ($garment->audit_level === 'urgente')
                                                     <span
                                                         class="ml-2 px-2 py-0.5 text-xs rounded-full bg-red-600 text-white">
@@ -192,15 +220,26 @@
 
                                             {{-- ESTADO --}}
                                             <td class="px-4 py-3">
-                                                @if ($garment->status === 'pendiente')
+                                                {{-- Calculamos el estado usando el Accessor (asegúrate de que está definido en el modelo Garment) --}}
+                                                @php
+                                                    $status = $garment->calculated_status;
+                                                @endphp
+
+                                                @if ($status === 'pendiente')
                                                     <span
                                                         class="px-3 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
                                                         PENDIENTE
                                                     </span>
-                                                @else
+                                                @elseif ($status === 'entregado')
                                                     <span
                                                         class="px-3 py-1 text-xs rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                                                         ENTREGADO
+                                                    </span>
+                                                @else
+                                                    {{-- Para cualquier otro caso que pueda surgir (ej. cerrado, aunque tu lógica actual no lo usa) --}}
+                                                    <span
+                                                        class="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                                                        CERRADO
                                                     </span>
                                                 @endif
                                             </td>
@@ -215,6 +254,7 @@
                                                 @if ($garment->status === 'pendiente')
                                                     {{-- Opción para ENTREGAR (Solo si está pendiente) --}}
                                                     <a href="{{ route('garments.edit', $garment) }}"
+                                                        {{-- CAMBIO APLICADO AQUÍ --}}
                                                         class="text-green-600 dark:text-green-400 hover:underline font-semibold">
                                                         Entregar
                                                     </a>

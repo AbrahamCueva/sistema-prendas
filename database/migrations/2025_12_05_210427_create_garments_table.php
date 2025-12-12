@@ -13,20 +13,28 @@ return new class extends Migration
     {
         Schema::create('garments', function (Blueprint $table) {
             $table->id();
-            // 1. Datos principales (MODIFICADOS)
-            $table->string('pv', 5); // Código PV (5 números aleatorios) - YA NO ES UNIQUE
+            // 1. Datos principales
+            $table->string('pv', 5);
             $table->string('color');
-            $table->string('size', 10); // NUEVO: Campo para la talla (S, M, L, 32, 40)
-            $table->unsignedSmallInteger('quantity')->default(1); // NUEVO: Cantidad de prendas en el lote
+            $table->string('size', 10);
+
+            // --- CAMBIOS CLAVE PARA GESTIONAR LOTES PARCIALES ---
+            // Renombramos 'quantity' a 'quantity_in' (Cantidad total que entra)
+            $table->unsignedSmallInteger('quantity_in')->default(1);
+            // NUEVA COLUMNA: Cantidad total que ha salido del lote
+            $table->unsignedSmallInteger('quantity_out')->default(0);
+            // ----------------------------------------------------
+
             $table->boolean('is_audit')->default(false);
-            $table->enum('audit_level', ['normal', 'urgente'])->default('normal'); // MODIFICADO: Nivel de Auditoría/Urgencia (Elimina is_audit)
+            $table->string('defect_photo_path', 2048)->nullable();
+            $table->enum('audit_level', ['normal', 'urgente'])->default('normal');
 
             // 2. Relaciones (Foreign Keys)
             $table->foreignId('client_id')->constrained('clients');
             $table->foreignId('stitching_line_id')->constrained('stitching_lines');
             $table->foreignId('motive_id')->constrained('motives');
 
-            // 3. Registro de Entrega y Devolución
+            // 3. Registro de Entrada y Devolución
             $table->string('delivered_by');
             $table->dateTime('delivery_in_date');
             $table->foreignId('registered_by_user_id')->constrained('users');
@@ -35,7 +43,8 @@ return new class extends Migration
             $table->dateTime('delivery_out_date')->nullable();
             $table->foreignId('delivered_by_user_id')->nullable()->constrained('users');
 
-            $table->enum('status', ['pendiente', 'entregado'])->default('pendiente');
+            // MODIFICAMOS el ENUM para incluir 'en_proceso' (Entrega parcial)
+            $table->enum('status', ['pendiente', 'en_proceso', 'entregado'])->default('pendiente');
 
             $table->timestamps();
         });

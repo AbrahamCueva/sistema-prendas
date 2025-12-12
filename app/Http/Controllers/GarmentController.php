@@ -34,8 +34,13 @@ class GarmentController extends Controller
             $query->where('client_id', $request->client_id);
         }
 
+        // MODIFICADO: El estado 'entregado' ahora significa que quantity_in == quantity_out
         if ($request->filled('status') && $request->status !== 'todos') {
-            $query->where('status', $request->status);
+            if ($request->status === 'entregado') {
+                $query->whereRaw('quantity_in = quantity_out');
+            } elseif ($request->status === 'pendiente') {
+                $query->whereRaw('quantity_in > quantity_out');
+            }
         }
 
         if ($request->filled('date_from')) {
@@ -49,7 +54,8 @@ class GarmentController extends Controller
         }
 
         // 4. Ordenación (Pendientes primero, luego Entregados, por fecha descendente)
-        $query->orderByRaw("FIELD(status, 'pendiente', 'entregado')")
+        // MODIFICADO: Ordenar por cantidad pendiente
+        $query->orderByRaw('quantity_in - quantity_out DESC')
             ->orderBy('delivery_in_date', 'desc');
 
         // 5. Paginación
@@ -74,7 +80,11 @@ class GarmentController extends Controller
         }
 
         if ($request->filled('status') && $request->status !== 'todos') {
-            $query->where('status', $request->status);
+            if ($request->status === 'entregado') {
+                $query->whereRaw('quantity_in = quantity_out');
+            } elseif ($request->status === 'pendiente') {
+                $query->whereRaw('quantity_in > quantity_out');
+            }
         }
 
         if ($request->filled('date_from')) {
@@ -86,7 +96,7 @@ class GarmentController extends Controller
         }
 
         // 3. Ordenación (Opcional, pero recomendado para mantener la coherencia)
-        $query->orderByRaw("FIELD(status, 'pendiente', 'entregado')")
+        $query->orderByRaw('quantity_in - quantity_out DESC')
             ->orderBy('delivery_in_date', 'desc');
 
         // 4. Descargar el archivo
@@ -123,10 +133,17 @@ class GarmentController extends Controller
             'pv' => 'required|string|size:5', // PV ya no es unique
             'color' => 'required|string|max:100',
             'size' => 'required|string|max:10', // NUEVO: Talla
-            'quantity' => 'required|integer|min:1', // NUEVO: Cantidad
+            'quantity_in' => 'required|integer|min:1', // MODIFICADO: Cantidad de entrada
             'delivered_by' => 'required|string|max:255',
             'audit_level' => 'required|in:normal,urgente', // MODIFICADO: Nivel de auditoría
+            'defect_photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
+
+        $photoPath = null;
+        if ($request->hasFile('defect_photo')) {
+            // Almacenar la foto en la carpeta 'public/defects' y guardar la ruta
+            $photoPath = $request->file('defect_photo')->store('defects', 'public');
+        }
 
         Garment::create([
             'client_id' => $request->client_id,
@@ -134,13 +151,16 @@ class GarmentController extends Controller
             'motive_id' => $request->motive_id,
             'pv' => $request->pv,
             'color' => $request->color,
-            'size' => $request->size, // Nuevo campo
-            'quantity' => $request->quantity, // Nuevo campo
+            'size' => $request->size,
+            'quantity_in' => $request->quantity_in, // USAMOS quantity_in
+            'quantity_out' => 0, // Inicia en 0
             'delivered_by' => $request->delivered_by,
-            'audit_level' => $request->audit_level, // Nuevo campo
+            'audit_level' => $request->audit_level,
+            'defect_photo_path' => $photoPath,
             'delivery_in_date' => Carbon::now(),
             'registered_by_user_id' => Auth::id(),
-            'status' => 'pendiente',
+            // Ya no usamos 'status' literal, se calcula. Se puede mantener para compatibilidad si la vista lo requiere, pero quantity_in > quantity_out es la nueva 'pendiente'
+            // 'status' => 'pendiente',
         ]);
 
         return redirect()->route('garments.index')
@@ -162,9 +182,10 @@ class GarmentController extends Controller
      */
     public function edit(Garment $garment)
     {
-        if ($garment->status === 'entregado') {
+        // El lote ya se considera "entregado" si no hay nada pendiente (quantity_in == quantity_out)
+        if ($garment->quantity_in == $garment->quantity_out) {
             return redirect()->route('garments.show', $garment)
-                ->with('error', 'Esta prenda ya fue entregada y no se puede modificar su estado.');
+                ->with('error', 'Este lote ya ha sido entregado en su totalidad y no se puede modificar.');
         }
 
         // Simplemente redirigimos a un formulario de confirmación de entrega
@@ -173,26 +194,54 @@ class GarmentController extends Controller
         return view('garments.deliver', compact('garment'));
     }
 
+    // En App\Http\Controllers\GarmentController.php
+
     public function deliver(Request $request, Garment $garment)
     {
-        if ($garment->status === 'entregado') {
+        // 1. Verificación inicial de estado (aunque la validación de cantidad ya lo hace)
+        if ($garment->quantity_in == $garment->quantity_out) {
             return redirect()->route('garments.index')
-                ->with('error', 'La prenda ya fue marcada como entregada previamente.');
+                ->with('error', 'El lote ya fue marcado como entregado totalmente.');
         }
 
+        $pendingQuantity = $garment->quantity_in - $garment->quantity_out;
+
+        // 2. Validación de la solicitud
         $request->validate([
             'received_by' => 'required|string|max:255',
+            // La cantidad a entregar no puede superar lo pendiente
+            'quantity_delivered' => 'required|integer|min:1|max:'.$pendingQuantity,
         ]);
 
-        $garment->update([
-            'received_by' => $request->received_by, // Persona que recibe la prenda de vuelta
-            'delivery_out_date' => Carbon::now(), // Fecha y hora de devolución
-            'delivered_by_user_id' => Auth::id(), // Usuario que registra la salida
-            'status' => 'entregado',
-        ]);
+        $quantityToDeliver = $request->quantity_delivered;
+        $newQuantityOut = $garment->quantity_out + $quantityToDeliver;
+        $quantityRemaining = $garment->quantity_in - $newQuantityOut;
 
-        return redirect()->route('garments.index')
-            ->with('success', "Prenda PV **{$garment->pv}** marcada como entregada exitosamente.");
+        // 3. Preparar los datos de actualización
+        $updateData = [
+            'quantity_out' => $newQuantityOut, // Sumar la nueva entrega
+            'received_by' => $request->received_by,
+            'delivery_out_date' => Carbon::now(), // Siempre se actualiza con la última salida
+            'delivered_by_user_id' => Auth::id(),
+        ];
+
+        // **MODIFICACIÓN CLAVE:** Actualizar el campo 'status' si la entrega es total
+        if ($quantityRemaining <= 0) {
+            $updateData['status'] = 'entregado';
+        }
+        // Si quedan pendientes, el status permanece como 'pendiente' (asumiendo que se guardó así en 'store')
+
+        // 4. Ejecutar la actualización en la base de datos
+        $garment->update($updateData);
+
+        // 5. Mensaje de éxito
+        if ($quantityRemaining > 0) {
+            $message = "Entrega parcial registrada. Se entregaron **{$quantityToDeliver}** prendas (PV {$garment->pv}). Quedan **{$quantityRemaining}** prendas **PENDIENTES** en este lote.";
+        } else {
+            $message = "Entrega total del lote PV **{$garment->pv}** ({$garment->quantity_in} prendas) marcada como entregada exitosamente.";
+        }
+
+        return redirect()->route('garments.index')->with('success', $message);
     }
 
     /**
@@ -209,11 +258,11 @@ class GarmentController extends Controller
     public function destroy(Garment $garment)
     {
         // Validación de Regla de Negocio:
-        // Solo se puede eliminar si ya ha sido entregada.
-        if ($garment->status !== 'entregado') {
+        // Se puede eliminar si está totalmente entregado.
+        if ($garment->quantity_in !== $garment->quantity_out) {
             return redirect()->route('garments.index')->with(
                 'error',
-                "No se puede eliminar la prenda **PV {$garment->pv}** porque su estado es 'pendiente'. Solo se permiten eliminar lotes ya entregados."
+                "No se puede eliminar el lote **PV {$garment->pv}** porque su estado es 'pendiente' (quedan {$garment->getQuantityPendingAttribute()} prendas). Solo se permiten eliminar lotes ya entregados totalmente."
             );
         }
 
