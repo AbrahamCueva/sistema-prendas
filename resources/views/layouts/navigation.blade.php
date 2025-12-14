@@ -32,7 +32,11 @@
 
                 {{-- Enlace principal de prendas (Garments) --}}
                 <x-nav-link :href="route('garments.index')" :active="request()->routeIs('garments.*')">
-                    <i class="fas fa-tshirt mr-2"></i> **{{ __('Registro de Prendas') }}**
+                    <i class="fas fa-tshirt mr-2"></i> {{ __('Registro de Prendas') }}
+                </x-nav-link>
+
+                <x-nav-link :href="route('audit.index')" :active="request()->routeIs('audit.*')">
+                    <i class="fas fa-tshirt mr-2"></i> {{ __('Registro de Auditoría') }}
                 </x-nav-link>
             </div>
 

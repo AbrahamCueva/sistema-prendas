@@ -2,13 +2,19 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Garment extends Model
 {
+    use HasFactory;
+    use LogsActivity;
+
     protected $guarded = [];
-    
+
     protected $casts = [
         'delivery_in_date' => 'datetime',
         'delivery_out_date' => 'datetime',
@@ -57,5 +63,14 @@ class Garment extends Model
     public function deliveredByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'delivered_by_user_id');
+    }
+
+    // 1. Definir las opciones de registro
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll() // Registra cualquier cambio en los campos definidos
+            ->logOnlyDirty() // Solo registra los atributos que realmente cambiaron
+            ->dontSubmitEmptyLogs(); // No guarda logs si no hubo cambios reales
     }
 }

@@ -1,12 +1,13 @@
 <?php
 
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GarmentController;
 use App\Http\Controllers\MotiveController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\StitchingLineController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\StitchingLineController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -35,6 +36,10 @@ Route::middleware('auth')->group(function () {
     Route::get('garments/export', [GarmentController::class, 'export'])->name('garments.export');
     Route::resource('garments', GarmentController::class);
     Route::put('garments/{garment}/deliver', [GarmentController::class, 'deliver'])->name('garments.deliver');
+    Route::get('/auditoria', [ActivityLogController::class, 'index'])->name('audit.index');
+    Route::get('/auditoria/{activity}', [ActivityLogController::class, 'show'])->name('audit.show');
+    Route::get('/auditoria/{activity}/reporte', [ActivityLogController::class, 'report'])
+        ->name('audit.report');
 });
 
 require __DIR__.'/auth.php';
