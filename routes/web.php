@@ -6,6 +6,7 @@ use App\Http\Controllers\GarmentController;
 use App\Http\Controllers\MotiveController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StitchingLineController;
+use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -21,6 +22,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::delete('/profile/photo', [ProfileController::class, 'deletePhoto'])->name('profile.delete-photo');
+
+    Route::get('/configuracion/sitio', [SettingsController::class, 'edit'])->name('settings.edit');
+    Route::put('/configuracion/sitio', [SettingsController::class, 'update'])->name('settings.update');
 });
 
 Route::middleware('auth')->group(function () {
