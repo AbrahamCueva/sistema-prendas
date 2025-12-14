@@ -79,16 +79,12 @@ class ProfileController extends Controller
 
     public function deletePhoto(Request $request): RedirectResponse
     {
-        // Eliminar la foto del disco (Storage)
         if ($request->user()->profile_photo_path) {
             Storage::disk('public')->delete($request->user()->profile_photo_path);
         }
-
-        // Eliminar la referencia de la foto en la base de datos
         $request->user()->forceFill([
             'profile_photo_path' => null,
         ])->save();
-
         return Redirect::route('profile.edit')->with('status', 'photo-deleted');
     }
 }

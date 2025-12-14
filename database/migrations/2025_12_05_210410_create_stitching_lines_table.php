@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('stitching_lines', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique(); // Línea 1, Línea 7, Servicio Externo (Único)
-            $table->boolean('is_external_service')->default(false); // Para identificar el servicio único
+            $table->string('name')->unique();
+            $table->boolean('is_external_service')->default(false); 
             $table->timestamps();
         });
     }

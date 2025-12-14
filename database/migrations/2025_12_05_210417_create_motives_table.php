@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('motives', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // Mal cosido, Falta bordado, Falta estampado (goma/tallas), Jalon, etc.
-            $table->enum('type', ['costura', 'bordado', 'estampado', 'general']); // Para categorizar el motivo
+            $table->string('name');
+            $table->enum('type', ['costura', 'bordado', 'estampado', 'general']);
             $table->timestamps();
         });
     }

@@ -16,7 +16,6 @@ class MotiveController extends Controller
     {
         $motives = Motive::orderBy('name')->paginate(10);
         $motiveTypes = $this->motiveTypes;
-
         return view('motives.index', compact('motives', 'motiveTypes'));
     }
 
@@ -26,7 +25,6 @@ class MotiveController extends Controller
     public function create()
     {
         $motiveTypes = $this->motiveTypes;
-
         return view('motives.create', compact('motiveTypes'));
     }
 
@@ -39,9 +37,7 @@ class MotiveController extends Controller
             'name' => 'required|string|max:255',
             'type' => 'required|in:'.implode(',', array_keys($this->motiveTypes)),
         ]);
-
         Motive::create($request->only(['name', 'type']));
-
         return redirect()->route('motives.index')
             ->with('success', 'Motivo de arreglo registrado exitosamente.');
     }
@@ -60,7 +56,6 @@ class MotiveController extends Controller
     public function edit(Motive $motive)
     {
         $motiveTypes = $this->motiveTypes;
-
         return view('motives.edit', compact('motive', 'motiveTypes'));
     }
 
@@ -73,9 +68,7 @@ class MotiveController extends Controller
             'name' => 'required|string|max:255',
             'type' => 'required|in:'.implode(',', array_keys($this->motiveTypes)),
         ]);
-
         $motive->update($request->only(['name', 'type']));
-
         return redirect()->route('motives.index')
             ->with('success', 'Motivo de arreglo actualizado exitosamente.');
     }
@@ -89,9 +82,7 @@ class MotiveController extends Controller
             return redirect()->route('motives.index')
                 ->with('error', 'No se puede eliminar el motivo porque tiene prendas asociadas.');
         }
-
         $motive->delete();
-
         return redirect()->route('motives.index')
             ->with('success', 'Motivo de arreglo eliminado exitosamente.');
     }

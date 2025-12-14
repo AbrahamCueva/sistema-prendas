@@ -12,9 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            // Para guardar la ruta de la imagen
             $table->string('profile_photo_path', 2048)->nullable();
-            // Nuevos campos profesionales
             $table->string('job_title')->nullable();
             $table->string('assigned_line')->nullable();
         });

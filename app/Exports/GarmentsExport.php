@@ -40,15 +40,20 @@ class GarmentsExport implements FromQuery, WithHeadings, ShouldAutoSize, WithMap
             'Cliente',
             'Talla',
             'Color',
-            'Cantidad',
+            // --- MODIFICACIÓN DE CANTIDADES ---
+            'Cant. Ingreso',
+            'Cant. Entregada',
+            'Cant. Pendiente',
+            // ----------------------------------
             'Línea de Costura',
             'Motivo de Arreglo',
             'Nivel Auditoría',
             'Fecha Entrada',
             'Estado',
             'Usuario Registro',
-            'Fecha Entrega',
-            'Usuario Entrega',
+            'Fecha Entrega Final', // Mejorar la descripción
+            'Usuario Entrega Final', // Mejorar la descripción
+            'Recibido Por', // Nuevo campo si lo usas en el modelo
         ];
     }
 
@@ -57,21 +62,30 @@ class GarmentsExport implements FromQuery, WithHeadings, ShouldAutoSize, WithMap
      */
     public function map($garment): array
     {
+        $quantityPending = $garment->quantity_in - $garment->quantity_out;
+
         return [
             $garment->id,
             $garment->pv,
             $garment->client->name ?? 'N/A',
             $garment->size,
             $garment->color,
-            $garment->quantity,
+            // --- MAPEO DE CANTIDADES ---
+            $garment->quantity_in, // Cantidad que entró
+            $garment->quantity_out, // Cantidad que salió (entregada)
+            $quantityPending, // Cantidad restante
+            // ---------------------------
             $garment->stitchingLine->name ?? 'N/A',
             $garment->motive->name ?? 'N/A',
             ucfirst($garment->audit_level),
             $garment->delivery_in_date ? $garment->delivery_in_date->format('Y-m-d H:i') : '',
+            // Usamos el campo status de la DB, que ya se actualiza correctamente
             ucfirst($garment->status),
             $garment->registeredByUser->name ?? 'N/A',
-            $garment->delivery_out_date ? $garment->delivery_out_date->format('Y-m-d H:i') : 'PENDIENTE',
+            // Si está entregado, mostramos la fecha de entrega final, sino se deja vacío
+            ($garment->status === 'entregado') ? $garment->delivery_out_date->format('Y-m-d H:i') : '',
             $garment->deliveredByUser->name ?? 'N/A',
+            $garment->received_by ?? '', // Nombre de la persona que recibió (si aplica)
         ];
     }
 }

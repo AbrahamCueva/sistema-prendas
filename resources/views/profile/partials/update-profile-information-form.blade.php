@@ -3,27 +3,18 @@
         <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
             {{ __('Información de Perfil Profesional') }}
         </h2>
-
         <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
             {{ __('Actualice el nombre, foto, correo electrónico, puesto y línea de trabajo de su cuenta.') }}
         </p>
     </header>
-
-    {{-- Formulario para reenviar verificación (sin cambios) --}}
     <form id="send-verification" method="post" action="{{ route('verification.send') }}">
         @csrf
     </form>
-
-    {{-- IMPORTANTE: Añadir enctype="multipart/form-data" para la subida de la foto --}}
     <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6" enctype="multipart/form-data" x-data="{ photoName: null, photoPreview: null }">
         @csrf
         @method('patch')
-
-        {{-- 1. CAMPO: FOTO DE PERFIL --}}
         <div>
             <x-input-label for="photo" :value="__('Foto de Perfil')" />
-
-            {{-- Input de Archivo (Oculto) --}}
             <input type="file"
                    id="photo"
                    name="photo"
@@ -38,25 +29,19 @@
                        reader.readAsDataURL($refs.photo.files[0]);
                    "
             />
-
             <div class="flex items-center space-x-4 mt-2">
-                {{-- Vista Previa de la Foto (Usando Alpine.js) --}}
                 <div class="shrink-0">
-                    {{-- Mostrar la foto actual del usuario si existe --}}
                     @if ($user->profile_photo_path)
                         <img x-show="!photoPreview"
                              src="{{ asset('storage/' . $user->profile_photo_path) }}"
                              class="rounded-full h-20 w-20 object-cover border border-gray-300 dark:border-gray-600"
                              alt="{{ $user->name }}">
                     @else
-                        {{-- Placeholder si no hay foto --}}
                         <div x-show="!photoPreview"
                              class="rounded-full h-20 w-20 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400 text-3xl font-bold">
                             {{ substr($user->name, 0, 1) }}
                         </div>
                     @endif
-
-                    {{-- Mostrar la nueva foto seleccionada --}}
                     <img x-show="photoPreview"
                          :src="photoPreview"
                          class="rounded-full h-20 w-20 object-cover border border-indigo-500"
@@ -64,39 +49,28 @@
                 </div>
 
                 <div class="space-y-2">
-                    {{-- Botón para Seleccionar Nueva Foto --}}
                     <x-secondary-button type="button" x-on:click.prevent="$refs.photo.click()" class="me-2">
                         {{ __('Seleccionar Nueva Foto') }}
                     </x-secondary-button>
-
-                    {{-- Botón para Eliminar Foto (requiere ruta separada en ProfileController) --}}
                     @if ($user->profile_photo_path)
-                        {{-- Nota: Esto requiere una ruta POST separada para la eliminación --}}
                         <button type="button" class="text-sm text-red-600 dark:text-red-400 hover:text-red-800"
                                 onclick="document.getElementById('delete-photo-form').submit();">
                             {{ __('Eliminar Foto Actual') }}
                         </button>
                     @endif
-
                     <x-input-error for="photo" class="mt-2" :messages="$errors->get('photo')" />
                 </div>
             </div>
         </div>
-
-        {{-- 2. CAMPO: Nombre --}}
         <div>
             <x-input-label for="name" :value="__('Nombre Completo')" />
             <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required autofocus autocomplete="name" />
             <x-input-error class="mt-2" :messages="$errors->get('name')" />
         </div>
-
-        {{-- 3. CAMPO: Correo Electrónico --}}
         <div>
             <x-input-label for="email" :value="__('Correo Electrónico')" />
             <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
             <x-input-error class="mt-2" :messages="$errors->get('email')" />
-
-            {{-- Sección de Verificación de Email (sin cambios) --}}
             @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
                 <div>
                     <p class="text-sm mt-2 text-gray-800 dark:text-gray-200">
@@ -113,8 +87,6 @@
                 </div>
             @endif
         </div>
-
-        {{-- 4. NUEVO CAMPO: Puesto de Trabajo --}}
         <div>
             <x-input-label for="job_title" :value="__('Puesto de Trabajo / Rol')" />
             {{-- Usamos $user->job_title para obtener el valor actual del modelo --}}
@@ -122,19 +94,14 @@
             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Ej: Auditor de Calidad, Jefe de Producción.</p>
             <x-input-error class="mt-2" :messages="$errors->get('job_title')" />
         </div>
-
-        {{-- 5. NUEVO CAMPO: Línea Asignada --}}
         <div>
             <x-input-label for="assigned_line" :value="__('Línea/Área Asignada')" />
             <x-text-input id="assigned_line" name="assigned_line" type="text" class="mt-1 block w-full" :value="old('assigned_line', $user->assigned_line)" autocomplete="department" />
             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Ej: Línea 5, Taller de Acabados.</p>
             <x-input-error class="mt-2" :messages="$errors->get('assigned_line')" />
         </div>
-
-        {{-- Botón Guardar y Mensaje de Estado (sin cambios) --}}
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('Guardar Cambios') }}</x-primary-button>
-
             @if (session('status') === 'profile-updated')
                 <p
                     x-data="{ show: true }"
@@ -147,8 +114,6 @@
         </div>
     </form>
 </section>
-
-{{-- Formulario oculto para ELIMINAR FOTO (Requiere ruta separada en ProfileController) --}}
 @if ($user->profile_photo_path)
     <form id="delete-photo-form" method="post" action="{{ route('profile.delete-photo') }}" class="hidden">
         @csrf

@@ -13,7 +13,6 @@ class ClientController extends Controller
     public function index()
     {
         $clients = Client::orderBy('name')->paginate(10);
-
         return view('clients.index', compact('clients'));
     }
 
@@ -33,9 +32,7 @@ class ClientController extends Controller
         $request->validate([
             'name' => 'required|string|max:255|unique:clients,name',
         ]);
-
         Client::create($request->all());
-
         return redirect()->route('clients.index')
             ->with('success', 'Cliente (Marca) registrado exitosamente.');
     }
@@ -64,9 +61,7 @@ class ClientController extends Controller
         $request->validate([
             'name' => 'required|string|max:255|unique:clients,name,'.$client->id,
         ]);
-
         $client->update($request->all());
-
         return redirect()->route('clients.index')
             ->with('success', 'Cliente (Marca) actualizado exitosamente.');
     }
@@ -80,9 +75,7 @@ class ClientController extends Controller
             return redirect()->route('clients.index')
                 ->with('error', 'No se puede eliminar la marca porque tiene prendas asociadas.');
         }
-
         $client->delete();
-
         return redirect()->route('clients.index')
             ->with('success', 'Cliente (Marca) eliminado exitosamente.');
     }

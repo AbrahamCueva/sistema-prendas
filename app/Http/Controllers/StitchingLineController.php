@@ -13,7 +13,6 @@ class StitchingLineController extends Controller
     public function index()
     {
         $lines = StitchingLine::orderBy('name')->paginate(10);
-
         return view('stitching-lines.index', compact('lines'));
     }
 
@@ -34,12 +33,10 @@ class StitchingLineController extends Controller
             'name' => 'required|string|max:255|unique:stitching_lines,name',
             'is_external_service' => 'nullable|boolean',
         ]);
-
         StitchingLine::create([
             'name' => $request->name,
             'is_external_service' => $request->has('is_external_service'),
         ]);
-
         return redirect()->route('stitching-lines.index')
             ->with('success', 'Línea de Costura registrada exitosamente.');
     }
@@ -69,12 +66,10 @@ class StitchingLineController extends Controller
             'name' => 'required|string|max:255|unique:stitching_lines,name,'.$stitchingLine->id,
             'is_external_service' => 'nullable|boolean',
         ]);
-
         $stitchingLine->update([
             'name' => $request->name,
             'is_external_service' => $request->has('is_external_service'),
         ]);
-
         return redirect()->route('stitching-lines.index')
             ->with('success', 'Línea de Costura actualizada exitosamente.');
     }
@@ -88,9 +83,7 @@ class StitchingLineController extends Controller
             return redirect()->route('stitching-lines.index')
                 ->with('error', 'No se puede eliminar la línea porque tiene prendas asociadas.');
         }
-
         $stitchingLine->delete();
-
         return redirect()->route('stitching-lines.index')
             ->with('success', 'Línea de Costura eliminada exitosamente.');
     }
