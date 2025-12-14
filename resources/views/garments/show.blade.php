@@ -67,7 +67,7 @@
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                             <div>
                                 <p class="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1"><i class="fas fa-ruler-vertical"></i> Talla</p>
-                                <p class="font-bold text-xl dark:text-white">{{ $garment->size }}</p>
+                                <p class="font-bold text-xl dark:text-white">{{ $garment->sizes }}</p>
                             </div>
                             <div>
                                 <p class="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1"><i class="fas fa-boxes"></i> Cantidad Total (Entrada)</p>

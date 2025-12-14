@@ -40,6 +40,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/auditoria/{activity}', [ActivityLogController::class, 'show'])->name('audit.show');
     Route::get('/auditoria/{activity}/reporte', [ActivityLogController::class, 'report'])
         ->name('audit.report');
+    Route::get('garments/{garment}/add-stock', [GarmentController::class, 'showAddStockForm'])
+        ->name('garments.add-stock.form');
+
+    // Procesa el formulario y actualiza la cantidad_in del lote
+    Route::post('garments/{garment}/add-stock', [GarmentController::class, 'processAddStock'])
+        ->name('garments.add-stock.process');
 });
 
 require __DIR__.'/auth.php';

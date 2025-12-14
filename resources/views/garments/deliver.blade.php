@@ -22,7 +22,7 @@
                     <p class="text-gray-600 dark:text-gray-300 mb-6">
                         Marca: <span class="font-semibold">{{ $garment->client->name }}</span> |
                         Color: <span class="font-semibold">{{ $garment->color }}</span> |
-                        Talla: <span class="font-semibold">{{ $garment->size }}</span>
+                        Talla: <span class="font-semibold">{{ $garment->sizes }}</span>
                     </p>
                     <div class="mb-6 p-4 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700">
                         <p class="font-bold text-indigo-800 dark:text-indigo-300">

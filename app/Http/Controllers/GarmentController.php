@@ -10,6 +10,7 @@ use App\Models\StitchingLine;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
 class GarmentController extends Controller
@@ -44,6 +45,7 @@ class GarmentController extends Controller
             ->orderBy('delivery_in_date', 'desc');
         $garments = $query->paginate(15);
         $garments->appends($request->query()); // Mantiene los filtros al paginar
+
         return view('garments.index', compact('garments', 'clients'));
     }
 
@@ -72,6 +74,7 @@ class GarmentController extends Controller
         $query->orderByRaw('quantity_in - quantity_out DESC')
             ->orderBy('delivery_in_date', 'desc');
         $filename = 'lotes_prendas_'.Carbon::now()->format('Ymd_His').'.xlsx';
+
         return Excel::download(new GarmentsExport($query), $filename);
     }
 
@@ -84,6 +87,7 @@ class GarmentController extends Controller
         $lines = StitchingLine::orderBy('name')->get();
         $motives = Motive::orderBy('name')->get();
         $randomPV = str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
+
         return view('garments.create', compact('clients', 'lines', 'motives', 'randomPV'));
     }
 
@@ -98,7 +102,7 @@ class GarmentController extends Controller
             'motive_id' => 'required|exists:motives,id',
             'pv' => 'required|string|size:5',
             'color' => 'required|string|max:100',
-            'size' => 'required|string|max:10',
+            'sizes' => 'required|string|max:10',
             'quantity_in' => 'required|integer|min:1',
             'delivered_by' => 'required|string|max:255',
             'audit_level' => 'required|in:normal,urgente',
@@ -114,7 +118,7 @@ class GarmentController extends Controller
             'motive_id' => $request->motive_id,
             'pv' => $request->pv,
             'color' => $request->color,
-            'size' => $request->size,
+            'sizes' => $request->sizes,
             'quantity_in' => $request->quantity_in, // USAMOS quantity_in
             'quantity_out' => 0, // Inicia en 0
             'delivered_by' => $request->delivered_by,
@@ -123,6 +127,7 @@ class GarmentController extends Controller
             'delivery_in_date' => Carbon::now(),
             'registered_by_user_id' => Auth::id(),
         ]);
+
         return redirect()->route('garments.index')
             ->with('success', 'Lote de prendas PV '.$request->pv.' registrado con éxito. ¡Pendiente de entrega!');
     }
@@ -133,7 +138,46 @@ class GarmentController extends Controller
     public function show(Garment $garment)
     {
         $garment->load(['client', 'stitchingLine', 'motive', 'registeredByUser', 'deliveredByUser']);
+
         return view('garments.show', compact('garment'));
+    }
+
+    public function showAddStockForm(Garment $garment)
+    {
+        // $motives = Motive::orderBy('name')->get();
+        return view('garments.add-stock', compact('garment'));
+    }
+
+    /**
+     * Procesa la solicitud para incrementar la cantidad del lote.
+     */
+    public function processAddStock(Request $request, Garment $garment)
+    {
+        $request->validate([
+            'new_quantity' => 'required|integer|min:1',
+            'motives_id' => 'nullable|exists:motives,id',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        $newQuantity = (int) $request->new_quantity;
+        $totalOldQuantity = $garment->quantity_in;
+
+        DB::transaction(function () use ($garment, $newQuantity, $request, $totalOldQuantity) {
+            $garment->quantity_in += $newQuantity;
+            if ($request->motives_id) {
+                $garment->motive_id = $request->motives_id;
+            }
+            $garment->save();
+            activity()
+                ->performedOn($garment)
+                ->causedBy(auth()->user())
+                ->withProperty('previous_quantity_in', $totalOldQuantity)
+                ->withProperty('added_quantity', $newQuantity)
+                ->withProperty('notes', $request->notes)
+                ->log('Stock añadido al lote');
+        });
+        return redirect()->route('garments.index')
+            ->with('success', "Se han añadido {$newQuantity} unidades al Lote PV {$garment->pv}. Cantidad total de entrada actual: {$garment->fresh()->quantity_in}.");
     }
 
     /**
@@ -146,6 +190,7 @@ class GarmentController extends Controller
                 ->with('error', 'Este lote ya ha sido entregado en su totalidad y no se puede modificar.');
         }
         $garment->load(['client', 'stitchingLine', 'motive']);
+
         return view('garments.deliver', compact('garment'));
     }
 
@@ -178,6 +223,7 @@ class GarmentController extends Controller
         } else {
             $message = "Entrega total del lote PV **{$garment->pv}** ({$garment->quantity_in} prendas) marcada como entregada exitosamente.";
         }
+
         return redirect()->route('garments.index')->with('success', $message);
     }
 
@@ -201,6 +247,7 @@ class GarmentController extends Controller
             );
         }
         $garment->delete();
+
         return redirect()->route('garments.index')->with(
             'success',
             "El lote **PV {$garment->pv}** ha sido eliminado permanentemente."

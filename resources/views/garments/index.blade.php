@@ -1,16 +1,19 @@
 <x-app-layout>
     <x-slot name="title">
-        {{ __('Regristro y Seguimiento de Prendas') }}
+        {{ __('Registro y Seguimiento de Prendas') }}
     </x-slot>
     <x-slot name="header">
         <h2 class="font-bold text-2xl text-gray-800 dark:text-gray-200 leading-tight">
             {{ __('Registro y Seguimiento de Prendas') }}
         </h2>
     </x-slot>
+
     <div class="py-10">
         <div class="max-w-full mx-auto sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-900 overflow-hidden shadow-xl sm:rounded-2xl border dark:border-gray-700">
                 <div class="p-6 text-gray-900 dark:text-gray-200">
+                    
+                    {{-- HEADER Y BOTÓN DE REGISTRO --}}
                     <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
                         <h3 class="text-xl font-semibold">Listado de Lotes de Prendas</h3>
                         <a href="{{ route('garments.create') }}"
@@ -18,6 +21,8 @@
                             <i class="fas fa-plus"></i> Registrar ENTRADA
                         </a>
                     </div>
+                    
+                    {{-- MENSAJES DE SESIÓN --}}
                     @if (session('success'))
                         <div
                             class="bg-green-100 dark:bg-green-900 border-l-4 border-green-500 text-green-800 dark:text-green-200 p-4 mb-4 rounded">
@@ -39,6 +44,8 @@
                             <p>{!! session('warning') !!}</p>
                         </div>
                     @endif
+                    
+                    {{-- FORMULARIO DE FILTROS --}}
                     <form method="GET" action="{{ route('garments.index') }}"
                         class="mb-6 p-4 border dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 shadow-inner">
                         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
@@ -109,6 +116,8 @@
                             </a>
                         </div>
                     </form>
+
+                    {{-- TABLA DE RESULTADOS --}}
                     <div class="overflow-x-auto rounded-xl border dark:border-gray-700">
                         @if ($garments->isEmpty())
                             <p class="p-4 text-center text-gray-500 dark:text-gray-400">
@@ -132,7 +141,10 @@
                                             <td class="px-4 py-3 font-bold">
                                                 <span
                                                     class="text-indigo-600 dark:text-indigo-400 text-lg">{{ $garment->pv }}</span>
-                                                <span class="text-gray-500 dark:text-gray-400"> ({{ $garment->size }} /
+                                                <span class="text-gray-500 dark:text-gray-400"> (
+                                                    {{-- Muestra las tallas. Si es un array (por el cast), las une. Si es string, la muestra. --}}
+                                                    {{ is_array($garment->sizes) ? implode(', ', $garment->sizes) : $garment->sizes }} 
+                                                    /
                                                     x{{ $garment->quantity_in }}
                                                     @if ($garment->quantity_out > 0 && $garment->quantity_out != $garment->quantity_in)
                                                         <span class="text-green-600 dark:text-green-400"> | Entregado:
@@ -141,7 +153,7 @@
                                                     @php
                                                         $remaining = $garment->quantity_in - $garment->quantity_out;
                                                     @endphp
-                                                    @if ($garment->status === 'pendiente' && $remaining > 0)
+                                                    @if ($garment->calculated_status === 'pendiente' && $remaining > 0)
                                                         <span class="text-orange-600 dark:text-orange-400"> | Pendiente:
                                                             {{ $remaining }}</span>
                                                     @endif
@@ -193,25 +205,48 @@
                                                     </span>
                                                 @endif
                                             </td>
-                                            <td class="px-4 py-3 flex gap-3 items-center">
-                                                <a href="{{ route('garments.show', $garment) }}"
-                                                    class="text-blue-600 dark:text-blue-400 hover:underline">
-                                                    Ver
-                                                </a>
-                                                @if ($garment->status === 'pendiente')
-                                                    <a href="{{ route('garments.edit', $garment) }}"
-                                                        class="text-green-600 dark:text-green-400 hover:underline font-semibold">
-                                                        Entregar
+                                            
+                                            {{-- ACCIONES CON MODAL CORREGIDO --}}
+                                            <td
+                                                class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                                <div class="flex space-x-2">
+                                                    {{-- Ver Detalle --}}
+                                                    <a href="{{ route('garments.show', $garment) }}"
+                                                        class="p-2 text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200 transition"
+                                                        title="Ver Detalle">
+                                                        <i class="fas fa-eye"></i>
                                                     </a>
-                                                @elseif($garment->status === 'entregado')
-                                                    <button x-data=""
-                                                        x-on:click.prevent="$dispatch('open-modal', 'confirm-garment-deletion-{{ $garment->id }}')"
-                                                        class="text-red-600 dark:text-red-400 hover:underline text-sm">
-                                                        Eliminar
-                                                    </button>
-                                                @else
-                                                    <span class="text-gray-400 text-sm">Cerrado</span>
-                                                @endif
+
+                                                    {{-- Añadir Stock (si está pendiente) --}}
+                                                    @if ($garment->calculated_status === 'pendiente')
+                                                        <a href="{{ route('garments.add-stock.form', $garment) }}"
+                                                            class="p-2 text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-200 transition"
+                                                            title="Añadir más Stock">
+                                                            <i class="fas fa-plus-circle"></i>
+                                                        </a>
+                                                    @endif
+
+                                                    {{-- Registrar Devolución/Entrega (si aún hay pendiente) --}}
+                                                    @if ($garment->quantity_in > $garment->quantity_out)
+                                                        <a href="{{ route('garments.edit', $garment) }}"
+                                                            class="p-2 text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-200 transition"
+                                                            title="Registrar Devolución/Entrega">
+                                                            <i class="fas fa-truck"></i>
+                                                        </a>
+                                                    @endif
+
+                                                    {{-- Eliminar (solo si está entregado) - DISPARA MODAL --}}
+                                                    @if ($garment->calculated_status === 'entregado')
+                                                        <button type="button" 
+                                                            x-data=""
+                                                            x-on:click.prevent="$dispatch('open-modal', 'confirm-garment-deletion-{{ $garment->id }}')"
+                                                            class="p-2 text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200 transition"
+                                                            title="Eliminar Lote">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </button>
+                                                    @endif
+
+                                                </div>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -219,6 +254,8 @@
                             </table>
                         @endif
                     </div>
+                    
+                    {{-- PAGINACIÓN --}}
                     <div class="mt-6">
                         {{ $garments->links() }}
                     </div>
@@ -226,24 +263,31 @@
             </div>
         </div>
     </div>
+    
+    {{-- DEFINICIÓN DE LOS MODALES DE ELIMINACIÓN --}}
     @foreach ($garments as $garment)
-        @if ($garment->status === 'entregado')
+        @if ($garment->calculated_status === 'entregado')
             <x-modal name="confirm-garment-deletion-{{ $garment->id }}" focusable>
                 <form method="post" action="{{ route('garments.destroy', $garment) }}" class="p-6">
                     @csrf
                     @method('delete')
+
                     <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
                         ¿Estás seguro de que quieres eliminar este lote?
                     </h2>
+
                     <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                        Estás a punto de eliminar el lote PV **{{ $garment->pv }}** (Talla: {{ $garment->size }},
-                        Cant.: {{ $garment->quantity_out }}) de la base de datos.
+                        Estás a punto de eliminar el lote PV **{{ $garment->pv }}** (Tallas: 
+                        {{ is_array($garment->sizes) ? implode(', ', $garment->sizes) : $garment->sizes }},
+                        Cant.: {{ $garment->quantity_in }}) de la base de datos.
                         Esta acción es **irreversible**.
                     </p>
+
                     <div class="mt-6 flex justify-end">
                         <x-secondary-button x-on:click="$dispatch('close')">
                             Cancelar
                         </x-secondary-button>
+
                         <x-danger-button class="ms-3">
                             Eliminar Lote
                         </x-danger-button>

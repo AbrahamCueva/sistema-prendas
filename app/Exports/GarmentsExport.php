@@ -68,7 +68,7 @@ class GarmentsExport implements FromQuery, WithHeadings, ShouldAutoSize, WithMap
             $garment->id,
             $garment->pv,
             $garment->client->name ?? 'N/A',
-            $garment->size,
+            $garment->sizes,
             $garment->color,
             // --- MAPEO DE CANTIDADES ---
             $garment->quantity_in, // Cantidad que entró

@@ -4,103 +4,112 @@
     </x-slot>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Panel de Control') }}
+            {{ __('Panel de Control (Métricas de Prendas)') }}
         </h2>
     </x-slot>
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
+            {{-- Usaremos 5 columnas en lugar de 6 para un diseño más limpio --}}
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
+                
+                {{-- 1. Total Prendas Ingresadas (Nuevo - Suma de quantity_in) --}}
                 <div
                     class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-6 border-b-4 border-indigo-500 transition duration-300 hover:shadow-2xl">
                     <div class="flex items-center">
-                        <i class="fas fa-tshirt text-3xl text-indigo-500 mr-4"></i>
+                        <i class="fas fa-box-open text-3xl text-indigo-500 mr-4"></i>
                         <div>
-                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Lotes</p>
-                            <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ $totalGarments }}</h3>
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total **Prendas** Ingresadas</p>
+                            <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ number_format($totalGarmentsIn) }}</h3>
                         </div>
                     </div>
                 </div>
+
+                {{-- 2. Prendas Pendientes (Nuevo - Suma de quantity_in en lotes pendientes/en proceso) --}}
                 <div
                     class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-6 border-b-4 border-yellow-500 transition duration-300 hover:shadow-2xl">
                     <div class="flex items-center">
                         <i class="fas fa-clock text-3xl text-yellow-500 mr-4"></i>
                         <div>
-                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Lotes Pendientes</p>
-                            <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ $pendingGarments }}</h3>
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">**Prendas** Pendientes</p>
+                            <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ number_format($pendingGarmentsQuantity) }}</h3>
                         </div>
                     </div>
                     <a href="{{ route('garments.index', ['status' => 'pendiente']) }}"
                         class="mt-3 block text-xs text-yellow-600 hover:text-yellow-800 font-semibold dark:text-yellow-400 dark:hover:text-yellow-300">Ver
-                        Pendientes &rarr;</a>
+                        Detalle &rarr;</a>
                 </div>
+
+                {{-- 3. Prendas Entregadas (Nuevo - Suma de quantity_in en lotes entregados) --}}
                 <div
                     class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-6 border-b-4 border-green-500 transition duration-300 hover:shadow-2xl">
                     <div class="flex items-center">
                         <i class="fas fa-handshake text-3xl text-green-500 mr-4"></i>
                         <div>
-                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Lotes Entregados</p>
-                            <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ $deliveredGarments }}</h3>
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">**Prendas** Entregadas</p>
+                            <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ number_format($deliveredGarmentsQuantity) }}</h3>
                         </div>
                     </div>
                 </div>
+
+                {{-- 4. Tasa de Entrega (Nuevo - Basado en Prendas) --}}
                 <div
                     class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-6 border-b-4 border-sky-500 transition duration-300 hover:shadow-2xl">
                     <div class="flex items-center">
-                        <i class="fas fa-percent text-3xl text-sky-500 mr-4"></i>
+                        <i class="fas fa-check-circle text-3xl text-sky-500 mr-4"></i>
                         <div>
                             <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Tasa de Entrega</p>
                             <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ $deliveryRate }}%</h3>
                         </div>
                     </div>
                 </div>
+                
+                {{-- 5. Tasa de Auditoría / Defecto (Nuevo - Basado en Prendas con is_audit=true) --}}
                 <div
                     class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-6 border-b-4 border-red-500 transition duration-300 hover:shadow-2xl">
                     <div class="flex items-center">
                         <i class="fas fa-exclamation-triangle text-3xl text-red-500 mr-4"></i>
                         <div>
-                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Tasa de Rechazo</p>
-                            <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ $rejectionRate }}%</h3>
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Tasa de Auditoría/Defecto</p>
+                            <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ $auditRate }}%</h3>
                         </div>
                     </div>
                 </div>
-                @if ($inspectionPendingGarments > 0)
-                    <div
-                        class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-6 border-b-4 border-orange-500 transition duration-300 hover:shadow-2xl">
-                        <div class="flex items-center">
-                            <i class="fas fa-search text-3xl text-orange-500 mr-4"></i>
-                            <div>
-                                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Pend. Inspección</p>
-                                <h3 class="text-3xl font-bold text-gray-900 dark:text-white">
-                                    {{ $inspectionPendingGarments }}</h3>
-                            </div>
-                        </div>
-                        <a href="{{ route('garments.index', ['status' => 'inspeccion']) }}"
-                            class="mt-3 block text-xs text-orange-600 hover:text-orange-800 font-semibold dark:text-orange-400 dark:hover:text-orange-300">Revisar
-                            &rarr;</a>
-                    </div>
-                @else
-                    <div
-                        class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-6 border-b-4 border-red-500 transition duration-300 hover:shadow-2xl">
+
+                {{-- Puedes agregar un sexto widget si lo deseas, usando las variables que ya tienes, por ejemplo: --}}
+                <div
+                    class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-6 border-b-4 border-red-500 transition duration-300 hover:shadow-2xl">
                         <div class="flex items-center">
                             <i class="fas fa-fire text-3xl text-red-500 mr-4"></i>
                             <div>
-                                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Auditoría (Urgentes)</p>
-                                <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ $urgentGarments }}</h3>
+                                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Lotes de Auditoría (Urgentes)</p>
+                                <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ $urgentGarmentsLots }}</h3>
                             </div>
                         </div>
-                        @if ($urgentGarments > 0)
+                        @if ($urgentGarmentsLots > 0)
                             <a href="{{ route('garments.index', ['urgent' => 1]) }}"
                                 class="mt-3 block text-xs text-red-600 hover:text-red-800 font-semibold dark:text-red-400 dark:hover:text-red-300">¡Atender
                                 ahora! &rarr;</a>
                         @endif
+                </div>
+
+                <div
+                    class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-6 border-b-4 border-purple-500 transition duration-300 hover:shadow-2xl">
+                    <div class="flex items-center">
+                        <i class="fas fa-tshirt text-3xl text-purple-500 mr-4"></i>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Lotes Registrados</p>
+                            <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ $totalLots }}</h3>
+                        </div>
                     </div>
-                @endif
+                </div>
             </div>
+            
+            {{-- Mantenemos los gráficos y la tabla de lotes antiguos --}}
             <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="bg-white dark:bg-gray-800 shadow-xl sm:rounded-lg p-6">
                     <h3
                         class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 border-b dark:border-gray-700 pb-2">
-                        Distribución por Línea de Costura/Servicio
+                        Distribución por Línea de Costura/Servicio 
                     </h3>
                     <div class="relative h-80">
                         <canvas id="lineChart"></canvas>
@@ -113,7 +122,7 @@
                 <div class="bg-white dark:bg-gray-800 shadow-xl sm:rounded-lg p-6">
                     <h3
                         class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 border-b dark:border-gray-700 pb-2">
-                        Distribución por Motivo de Arreglo
+                        Distribución por Motivo de Arreglo 
                     </h3>
                     <div class="relative h-80">
                         <canvas id="motiveChart"></canvas>
@@ -124,6 +133,7 @@
                     @endif
                 </div>
             </div>
+
             <div class="mt-8">
                 <div class="bg-white dark:bg-gray-800 shadow-xl sm:rounded-lg p-6">
                     <h3
@@ -146,13 +156,16 @@
                                             Antigüedad</th>
                                         <th
                                             class="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-300 uppercase">
-                                            PV / Cant.</th>
+                                            PV / Cant. **Prendas**</th>
                                         <th
                                             class="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-300 uppercase">
                                             Cliente</th>
                                         <th
                                             class="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-300 uppercase">
                                             Motivo</th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-300 uppercase">
+                                            Línea de Servicio</th>
                                         <th
                                             class="px-4 py-3 text-center text-xs font-bold text-gray-500 dark:text-gray-300 uppercase">
                                             Acciones</th>
@@ -181,7 +194,7 @@
                                             </td>
                                             <td
                                                 class="px-4 py-2 text-sm font-semibold text-blue-600 dark:text-blue-400">
-                                                {{ $garment->pv }} (x{{ $garment->quantity_in }})
+                                                {{ $garment->pv }} (x{{ number_format($garment->quantity_in) }})
                                             </td>
                                             <td class="px-4 py-2 text-sm text-gray-700 dark:text-gray-300">
                                                 {{ $garment->client->name ?? 'N/A' }}
@@ -189,6 +202,11 @@
                                             <td class="px-4 py-2 text-xs">
                                                 <span
                                                     class="font-medium text-gray-700 dark:text-gray-300">{{ $garment->motive->name ?? 'N/A' }}</span>
+                                            </td>
+                                            {{-- Agregamos la línea de servicio para mayor contexto --}}
+                                            <td class="px-4 py-2 text-xs">
+                                                <span
+                                                    class="font-medium text-gray-700 dark:text-gray-300">{{ $garment->stitchingLine->name ?? 'N/A' }}</span>
                                             </td>
                                             <td class="px-4 py-2 text-center text-xs">
                                                 <a href="{{ route('garments.show', $garment) }}"
@@ -203,6 +221,7 @@
                     @endif
                 </div>
             </div>
+            
             <div class="mt-8 bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-6">
                 <p class="text-gray-700 font-semibold dark:text-gray-200">¡Bienvenido de vuelta,
                     {{ Auth::user()->name }}!</p>
@@ -211,8 +230,10 @@
             </div>
         </div>
     </div>
+    {{-- Mantenemos los scripts de Chart.js intactos --}}
     @push('scripts')
         <script>
+            // ... (El código de Chart.js es el mismo, solo que ahora usa las nuevas variables del controller, pero los nombres de las colecciones de gráficos no cambiaron) ...
             document.addEventListener('DOMContentLoaded', function() {
                 const lineLabels = @json($lineLabels);
                 const lineCounts = @json($lineCounts);

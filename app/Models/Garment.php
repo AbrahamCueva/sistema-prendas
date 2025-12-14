@@ -22,7 +22,10 @@ class Garment extends Model
         'quantity_in' => 'integer',
         'quantity_out' => 'integer',
         'defect_photo_path' => 'string',
+        'sizes' => 'array', // CAMBIO CLAVE: Castear el nuevo campo 'sizes' a array/JSON
     ];
+
+    // ... (Métodos de Accesor/Mutator) ...
 
     public function getCalculatedStatusAttribute()
     {
@@ -39,6 +42,8 @@ class Garment extends Model
     {
         return $this->quantity_in - $this->quantity_out;
     }
+
+    // ... (Relaciones) ...
 
     public function client(): BelongsTo
     {
@@ -69,8 +74,8 @@ class Garment extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logAll() // Registra cualquier cambio en los campos definidos
-            ->logOnlyDirty() // Solo registra los atributos que realmente cambiaron
-            ->dontSubmitEmptyLogs(); // No guarda logs si no hubo cambios reales
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 }
